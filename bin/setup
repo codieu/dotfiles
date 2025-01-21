@@ -1,0 +1,53 @@
+#!/bin/bash
+
+# figlet -f mini polybar | tr '(' '\' | tr ')' '/' | tr '|' '/'
+
+init() {
+  # make sure pwd is the git repo
+   printf "checking pwd...     "
+  if [ `dirname $0` == "./bin" ]; then
+    echo OK
+  else
+    echo ERR
+    echo
+    echo make sure the pwd is the git repo
+    exit
+  fi
+
+  export DOTDIR=`pwd`
+
+  # install necessary packages
+  #! install_pack first.pck
+
+  # select and editor
+  echo "select an editor to use"
+  echo
+  export EDITOR=`cat packs/editors.pck | fzf --height=40%`
+
+  # set zsh as default shell
+  echo "Changing shell to zsh"
+  chsh $USER -s /bin/zsh
+
+  # setup graph env
+  printf "Should setup graph env [Y/n]? "
+  read graph
+  if [[ $graph == "y" ]]; then
+  #! install_pack graph.pck
+  else
+  fi
+
+
+
+
+}
+
+install_pack() {
+  echo "Installing pack ($1)"
+  sudo pacman -Sy --noconfirm $(cat packs/$1)
+  echo "Installed pack ($1)"
+}
+
+
+case "$1" in
+  "init") init ;;
+esac

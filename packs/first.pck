@@ -1,0 +1,10 @@
+fzf
+nano
+vim
+neovim
+neofetch
+tmux
+git
+zsh
+man
+stow

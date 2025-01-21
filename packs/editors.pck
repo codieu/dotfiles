@@ -1,0 +1,4 @@
+nano
+vi
+vim
+nvim

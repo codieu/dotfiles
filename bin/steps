@@ -1,0 +1,98 @@
+##### TODO: maybe add costimazations to root (like a bash shell config...)
+#
+##### TODO: make this switch to normal user after creating it
+CUSER="codies"
+
+# useradd -G wheel $CUSER
+# passwd $CUSER
+# 
+# pacman -S $(cat first.pck)
+# chsh $CUSER -s /bin/zsh
+# TODO: something idk
+# TODO: make it select (and install) editors (nvim, vim, vi, nano)
+EDITOR="vim"
+
+# graph setup
+# pacman -S $(cat graph.pck)
+
+# echo "# Add what you want to get executed when" >> .xinitrc
+# echo "# WM/X11 starts" >> .xinitrc
+# $EDITOR /home/$CUSER/.xinitrc
+# startx ~/.xinitrc
+
+# setting up steam
+# Souce: https://youtu.be/AVqsdO7xENg
+
+# pacman -S artix-archlinux-support
+# echo "" >> /etc/pacman.conf
+# echo "## Arch" >> /etc/pacman.conf
+# echo "[extra]" >> /etc/pacman.conf
+# echo "Include = /etc/pacman.d/mirrorlist-arch" >> /etc/pacman.conf
+# echo "[multilib]" >> /etc/pacman.conf
+# echo "Include = /etc/pacman.d/mirrorlist-arch" >> /etc/pacman.conf
+# echo "[community]" >> /etc/pacman.conf
+# echo "Include = /etc/pacman.d/mirrorlist-arch" >> /etc/pacman.conf
+# echo "" >> /etc/pacman.conf
+# echo "# !!! Also uncomment lib32 repos !!!" >> /etc/pacman.conf
+# $EDITOR /etc/pacman.conf
+#
+# pacman-key --populate archlinux
+# pacman -Syy
+# pacman -Syu
+
+# echo "$CUSER N524388" >> /etc/limits
+# $EDITOR /etc/limits
+#
+### this is for `ulimit -Hn#`
+# TODO: make a check for ulimit stuff
+# echo "$CUSER	soft	nofile	524288" >> /etc/security/limits.conf
+# echo "$CUSER	hard	nofile	524288" >> /etc/security/limits.conf
+# echo "@$CUSER	soft	nofile	524288" >> /etc/security/limits.conf
+# echo "@$CUSER	hard	nofile	524288" >> /etc/security/limits.conf
+# $EDITOR /etc/security/limits.conf
+# 
+# echo "You need to reboot your system"
+# reboot
+# TODO: make this script auto pop up (on tty1) after the reboot
+# maybe use .zprofile
+# also make a flag file to store the state so you dont redoo all this stuff
+# like this is stage 2
+### (before reboot) echo "2" >> /home/$CUSER/stage
+### (after reboot // install)  rm /home/$CUSER/stage -f
+#
+### Souce: https://christitus.com/ultimate-linux-gaming-guide/
+# pacman -S lib32-mesa vulkan-radeon lib32-vulkan-radeon vulkan-icd-loader lib32-vulkan-icd-loader
+
+# TODO: this is for amd?????
+# echo "RADV_PERFTEST-aco" >> /etc/enviroment
+# $EDITOR /etc/enviroment
+
+## wine
+# pacman -S wine-staging giflib lib32-giflib libpng lib32-libpng libldap lib32-libldap gnutls lib32-gnutls mpg123 lib32-mpg123 openal lib32-openal v4l-utils lib32-v4l-utils libpulse lib32-libpulse libgpg-error lib32-libgpg-error alsa-plugins lib32-alsa-plugins alsa-lib lib32-alsa-lib libjpeg-turbo lib32-libjpeg-turbo sqlite lib32-sqlite libxcomposite lib32-libxcomposite libxinerama lib32-libgcrypt libgcrypt lib32-libxinerama ncurses lib32-ncurses opencl-icd-loader lib32-opencl-icd-loader libxslt lib32-libxslt libva lib32-libva gtk3 lib32-gtk3 gst-plugins-base-libs lib32-gst-plugins-base-libs vulkan-icd-loader lib32-vulkan-icd-loader lutris
+
+## steam
+# pacman -S steam
+### TODO: open steam and let it do its thing
+
+## protonup
+# pacman -S wget python-setuptools
+# git clone https://github.com/AUNaseef/protonup /home/$CUSER/git/protonup
+# cd /home/$CUSER/git/protonup
+# python3 setup.py install --user
+# cd
+
+### TODO: add .local/bin to path 
+
+# mkdir .steam/root/compatibilitytools.d/
+protonup -d ".steam/root/compatibilitytools.d/"
+protonup
+
+
+
+
+
+
+
+#### TODO: auto setup notetaking setup // idk what will it be tho 
+#### TODO: autosetup nvim stuff??
+#### TODO: have options for setup stuff // maybe a js wrapper with ncurses/blessed.js
