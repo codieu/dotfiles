@@ -1,3 +1,6 @@
 [submodule "modules/zsh"]
 	path = modules/zsh
 	url = git@github.com:codieu/zsh.git
+[submodule "modules/tmux"]
+	path = modules/tmux
+	url = git@github.com:codieu/tmux.git

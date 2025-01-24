@@ -1,0 +1,34 @@
+#!/usr/bin/env bash
+
+PROJ_FOLDERS=`echo ~/personal ~/work ~/dots/modules ~/cloned`
+EXTR_FOLDERS=`echo ~/dots ~/dots/bin ~/cloned`
+SPEC_FOLDERS=`echo`
+
+if [[ -n $1 ]] then
+  selected=$1
+else
+  selected=`find $PROJ_FOLDERS -maxdepth 1 -mindepth 1 -type d | cat - <(echo $EXTR_FOLDERS $SPEC_FOLDERS) | sed 's/ /\n/g' | sed 's/\/home\/codies\///g' | sort -r | fzf --tmux top,70%,45% --preview "ls -lhA $HOME/{}"`
+fi
+
+if [[ -z $selected ]] then
+  exit 0
+fi
+
+if echo $SPEC_FOLDERS | grep "$selected" > /dev/null; then
+  path="$HOME"
+else
+  path="$HOME/$selected"
+fi
+
+tmux_running=$(pgrep tmux)
+
+if [[ -z $TMUX ]] && [[ -z $tmux_running ]]; then
+    tmux new-session -s $selected -c $path
+    exit 0
+fi
+
+if ! tmux has-session -t=$selected 2> /dev/null; then
+    tmux new-session -ds $selected -c $path
+fi
+
+tmux switch-client -t $selected

@@ -1,0 +1,46 @@
+#!/bin/bash
+
+# echo dont use this yet
+# exit 1
+
+MODULE_DIR=$HOME/dots/modules
+CONFIG=".config"
+
+sw_clean() {
+  echo cleaning module $1...
+  for i in $(ls $MODULE_DIR/$1); do
+    # this is scary
+    rm -r $HOME/$CONFIG/$i
+  done
+}
+
+sw_link() {
+  if [[ "$1" == "all" ]]; then
+    echo "linking modules folder to '~/$CONFIG'"
+    stow -d $HOME/dots -t $HOME/$CONFIG --no-folding modules --dotfiles
+  else
+    echo TODO: linking module $1...
+    exit 1
+    # stow -d $HOME/dots -t $HOME/$CONFIG --no-folding $1 --dotfiles
+  fi
+}
+
+sw_list() {
+  ls $MODULE_DIR | sort -r 
+}
+
+sw_help() {
+  echo "Available Commands:"
+  echo "  help                    Print help and exit"
+  echo "  list                    Lists current modules"
+  echo "  link [all|NAME]         Symlink modules to \$CONFIG"
+  exit
+}
+
+case "$1" in
+  "list" ) sw_list ;;
+  "link" ) sw_link $2 ;;
+  *      ) sw_help ;;
+  # Not realy needed as * will capture this anyways
+  # "help" ) sw_help ;;
+esac
