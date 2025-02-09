@@ -3,7 +3,10 @@
 # echo dont use this yet
 # exit 1
 
-MODULE_DIR=$HOME/dots/modules
+DOTDIR="dots"
+PACKS_DIR=$HOME/$DOTDIR/packs
+FONTS_DIR=$HOME/$DOTDIR/fonts
+MODULE_DIR=$HOME/$DOTDIR/modules
 CONFIG=".config"
 
 sw_clean() {
@@ -15,32 +18,97 @@ sw_clean() {
 }
 
 sw_link() {
-  if [[ "$1" == "all" ]]; then
+  mod=`echo $1 | tr '[:upper:]' '[:lower:]'`
+  if [[ "$mod" == "all" ]]; then
     echo "linking modules folder to '~/$CONFIG'"
     stow -d $HOME/dots -t $HOME/$CONFIG --no-folding modules --dotfiles
   else
-    echo TODO: linking module $1...
+    echo TODO: linking module $mod...
     exit 1
     # stow -d $HOME/dots -t $HOME/$CONFIG --no-folding $1 --dotfiles
   fi
 }
 
-sw_list() {
-  ls $MODULE_DIR | sort -r 
+pk_help() {
+  echo "A manager for codie;dots O's packs"
+  echo 
+  echo "COMMANDS"
+  echo
+  echo "  help                    Print pack help and exit"
+  echo "  ls                      List packs"
+  echo "  install [all|NAME...]   Install selected packs"
+  echo
+  exit
+}
+
+pk_install() {
+  pack=`echo $1 | tr '[:upper:]' '[:lower:]'`
+  if [[ "$pack" == "all" ]]; then
+    echo "TODO: installing all packs"
+  else
+    echo "installing $pack.pck"
+    sudo pacman -Sy $(cat $PACKS_DIR/$pack.pck)
+  fi
+
+}
+
+sw_pack() {
+  case "$1" in
+    "ls"      ) ls $PACKS_DIR $2 ;;
+    "install" ) pk_install $2 ;;
+    *         ) pk_help ;;
+  esac
+}
+
+ft_help() {
+  echo "A manager for codie;dots O's fonts"
+  echo 
+  echo "COMMANDS"
+  echo
+  echo "  help                    Print font help and exit"
+  echo "  ls                      List fonts"
+  echo "  apply [all|NAME]        Apply fonts"
+  echo
+  exit
+}
+
+ft_apply() {
+  echo "TODO: apply font"
+}
+
+sw_font() {
+  case "$1" in
+    "ls"    ) ls $FONTS_DIR $2;;
+    "apply" ) ft_apply ;;
+    *       ) ft_help ;;
+  esac
 }
 
 sw_help() {
-  echo "Available Commands:"
+  echo "Central manager for codie;dots O"
+  echo 
+  echo "COMMANDS"
+  echo
   echo "  help                    Print help and exit"
-  echo "  list                    Lists current modules"
+  echo "  ls                      List modules"
+  echo "  tree                    Show modules in tree format"
   echo "  link [all|NAME]         Symlink modules to \$CONFIG"
+  echo
+  echo "SHORTCUTS"
+  echo
+  echo "  font                    Shortcut to codie;dots O"
+  echo "                          font util"
+  echo "  pack                    Shortcut to codie;dots O"
+  echo "                          pack installer"
   exit
 }
 
 case "$1" in
-  "list" ) sw_list ;;
+  "ls"   ) ls $MODULE_DIR $2 | sort -r ;;
+  "tree" ) tree $MODULE_DIR $2 ;;
   "link" ) sw_link $2 ;;
+
+  "font" ) sw_font $2 $3;;
+  "pack" ) sw_pack $2 $3 ;;
   *      ) sw_help ;;
-  # Not realy needed as * will capture this anyways
-  # "help" ) sw_help ;;
 esac

@@ -1,0 +1,61 @@
+#!/usr/bin/python
+
+from subprocess import run
+import sys
+import os
+
+if (len(sys.argv) < 2):
+    print("Usage: todoer <folder | --all> [--count]")
+    exit()
+
+flag = sys.argv[1]
+if (flag == "--all" or flag == "-a"):
+    folder = os.path.expanduser("~")
+else:
+    folder = os.path.realpath(sys.argv[1])
+
+
+
+if (len(sys.argv) > 2):
+    flag = sys.argv[2]
+
+    if (flag == "--count" or flag == "-c"):
+        cmd = ("grep --exclude-dir=.git -rnw " + folder + " -e TODO:").split(" ")
+        todocount = run(cmd, capture_output=True).stdout
+        print(len(todocount.split(b"\n")) - 1)
+        exit()
+
+# TODO: also add this to tmux scripts ig
+# TODO: also also add better search?? (search for todo non cap vise?)
+# TODO: alternate name aljhd
+
+todomap = {}
+
+print("Searching in " + folder)
+
+# TODO: handle this better
+cmd = ("grep --exclude-dir=.git -rnw " + folder + " -e TODO:").split(" ")
+
+rawfiles = run(cmd, capture_output=True).stdout
+
+for filething in rawfiles.split(b'\n'):
+    filething = filething.decode("utf-8")
+    filename = filething.split(':')[0]
+    why = filename + "/"
+    filename = os.path.relpath(why)
+    # linenumber = filething.split(':')[1]
+    todosplit = filething.split('TODO:')
+    if len(todosplit) != 1:
+        todosplit.pop(0)
+        todotext = "TODO".join(todosplit)
+        if filename in todomap.keys():
+            todomap[filename] = [*todomap[filename], todotext]
+        else:
+            todomap[filename] = [ todotext ]
+
+
+for file, todos in todomap.items():
+    print(file)
+    for todo in todos:
+        print(f"=> {todo}")
+print("...")

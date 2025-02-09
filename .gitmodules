@@ -4,3 +4,9 @@
 [submodule "modules/tmux"]
 	path = modules/tmux
 	url = git@github.com:codieu/tmux.git
+[submodule "modules/nvim"]
+	path = modules/nvim
+	url = git@github.com:codieu/neovim.git
+[submodule "modules/polybar"]
+	path = modules/polybar
+	url = git@github.com:codieu/polybar.git
