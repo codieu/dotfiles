@@ -1,7 +1,9 @@
 #!/usr/bin/env bash
 
+# TODO: make a cache thing
+
 langs="js lua python java"
-utils="jq awk sed sort find"
+utils="bash jq awk sed sort find"
 
 selec=`printf "$langs $utils" | tr ' ' '\n' | sort -r | fzf --preview "curl cht.sh/{} -s"`
 

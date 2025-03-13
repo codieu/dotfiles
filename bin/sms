@@ -1,0 +1,44 @@
+#!/bin/bash
+
+if [[ $# == 1 ]]; then
+  echo wrong number of arguments!
+  exit 1
+fi
+
+# TODO: fix "x devices found" message
+# maybe actualy allow you to select which device to send the sms from
+# and just use the only avail one if theres only one
+if ! kdeconnect-cli -a | grep -q "codie-p"; then
+  echo "phone not fucking connected"
+  exit 2
+fi
+
+if [[ $# != 0 ]]; then
+  # TODO: make a way to format the number better
+  # like put +90, +, +900 etc automaticly
+  # just chech size and append accordingly
+  num=$1
+  # slices the $@ array starting from arg 2
+  text="${@:2}"
+else
+  # TODO: get avail contacts and fzf them
+  num="+9005074309713"
+
+  printf "message (for $num): "
+  read text
+fi
+
+
+echo "Number: $num"
+echo "Text: $text"
+printf "Send message? [Y/n] "
+read confirm
+
+if [ "$confirm" == "n" ] || [ "$confirm" == "N" ]; then
+  echo exiting
+  exit 1
+fi
+
+printf "sending"
+kdeconnect-cli -n "codie-p" --destination "$num" --send-sms "$text"
+echo ...

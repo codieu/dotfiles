@@ -22,7 +22,7 @@ init() {
   # select and editor
   echo "select an editor to use"
   echo
-  export EDITOR=`cat packs/editors.pck | fzf --height=40%`
+  export EDITOR=`cat packs/editors.pck | fzf --height=6`
 
   # set zsh as default shell
   echo "Changing shell to zsh"
@@ -32,8 +32,9 @@ init() {
   printf "Should setup graph env [Y/n]? "
   read graph
   if [[ $graph == "y" ]]; then
-  #! install_pack graph.pck
+  install_pack graph.pck
   else
+    echo
   fi
 
 

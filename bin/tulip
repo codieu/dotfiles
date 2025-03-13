@@ -1,0 +1,140 @@
+#!/bin/bash
+
+# echo dont use this yet
+# exit 1
+
+DOTSDIR="dots"
+MODULEDIR=$HOME/$DOTSDIR/modules
+FONTSDIR=$HOME/$DOTSDIR/fonts
+PACKSDIR=$HOME/$DOTSDIR/packs
+CONFIG=".config"
+
+md_help() {
+  echo "A linker for codie;dots O's configs"
+  echo 
+  echo "COMMANDS"
+  echo
+  echo "  help                    Print help and exit"
+  echo "  ls                      List modules"
+  echo "  tree                    Show modules in tree format"
+  echo "  link [all|NAME]         Symlink modules to \$CONFIG"
+  echo "  linkbin                 Symlink bin to /usr/local/bin"
+  echo "  new [NAME]              Create a new folder in"
+  echo "                          modules path"
+  echo "  edit [NAME]             Edit a config file"
+
+}
+md_link() {
+  mod=`echo $1 | tr '[:upper:]' '[:lower:]'`
+  if [[ "$mod" == "all" ]]; then
+    echo "linking modules folder to '~/$CONFIG'"
+    stow -d $HOME/$DOTSDIR -t $HOME/$CONFIG --no-folding modules --dotfiles
+  else
+    echo TODO: linking module $mod...
+    exit 1
+    # stow -d $HOME/dots -t $HOME/$CONFIG --no-folding $1 --dotfiles
+  fi
+}
+
+pk_help() {
+  echo "A downloader for codie;dots O's packs"
+  echo 
+  echo "COMMANDS"
+  echo
+  echo "  help                    Print pack help and exit"
+  echo "  ls                      List packs"
+  echo "  install [all|NAME...]   Install selected packs"
+  echo
+  exit
+}
+
+pk_install() {
+  pack=`echo $1 | tr '[:upper:]' '[:lower:]'`
+  if [[ "$pack" == "all" ]]; then
+    echo "TODO: installing all packs"
+  else
+    echo "installing $pack.pck"
+    sudo pacman -Sy --noconfirm $(cat $PACKSDIR/$pack.pck)
+  fi
+
+}
+
+
+ft_help() {
+  echo "A setter for codie;dots O's fonts"
+  echo 
+  echo "COMMANDS"
+  echo
+  echo "  help                    Print font help and exit"
+  echo "  ls                      List fonts"
+  echo "  apply [all|NAME]        Apply fonts"
+  echo "  del [all|NAME]          Deapply fonts [TODO]"
+  echo
+  exit
+}
+
+ft_apply() {
+  sudo cp $FONTSDIR/$1 /usr/share/fonts/ -r
+  # TODO: check if -f switch needed
+  fc-cache -f
+}
+
+sw_help() {
+  echo "Central util for codie;dots O"
+  echo
+  echo "SHORTCUTS"
+  echo
+  echo "  module                  Shortcut to codie;dots O"
+  echo "                          config linking util"
+  echo "  font                    Shortcut to codie;dots O"
+  echo "                          font util"
+  echo "  pack                    Shortcut to codie;dots O"
+  echo "                          pack installer"
+  exit
+}
+
+sw_modu() {
+  case "$1" in
+    "ls"      ) ls $MODULEDIR ${@:2} ;;
+    "tree"    ) tree $MODULEDIR ${@:2} ;;
+    "link"    ) md_link $2 ;;
+    "linkbin" ) sudo stow -d $HOME/dots -t /usr/local/bin --no-folding bin ;;
+    "new"     ) mkdir $MODULEDIR/$2 ;;
+
+    *         ) md_help ;;
+  esac
+}
+
+sw_font() {
+  case "$1" in
+    "ls"    ) ls $FONTSDIR $2;;
+    "apply" ) ft_apply $2 ;;
+
+    *       ) ft_help ;;
+  esac
+}
+
+sw_pack() {
+  case "$1" in
+    "ls"      ) ls $PACKSDIR $2 ;;
+    "install" ) pk_install $2 ;;
+
+    *         ) pk_help ;;
+  esac
+}
+
+case "$1" in
+  "m"      ) sw_modu ${@:2} ;;
+  "mod"    ) sw_modu ${@:2} ;;
+  "modu"   ) sw_modu ${@:2} ;;
+  "module" ) sw_modu ${@:2} ;;
+
+  "f"      ) sw_font ${@:2} ;;
+  "font"   ) sw_font ${@:2} ;;
+
+  "p"      ) sw_pack ${@:2} ;;
+  "pack"   ) sw_pack ${@:2} ;;
+
+  *        ) sw_help ;;
+esac
+
