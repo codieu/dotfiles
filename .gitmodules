@@ -10,3 +10,6 @@
 [submodule "modules/polybar"]
 	path = modules/polybar
 	url = git@github.com:codieu/polybar.git
+[submodule "modules/dunst/rosepine"]
+	path = modules/dunst/rosepine
+	url = git@github.com:d2718nis/rose-pine-dunst.git

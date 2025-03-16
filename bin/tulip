@@ -3,10 +3,10 @@
 # echo dont use this yet
 # exit 1
 
-DOTSDIR="dots"
-MODULEDIR=$HOME/$DOTSDIR/modules
-FONTSDIR=$HOME/$DOTSDIR/fonts
-PACKSDIR=$HOME/$DOTSDIR/packs
+DOTSDIR="$HOME/dots"
+MODULEDIR=$DOTSDIR/modules
+FONTSDIR=$DOTSDIR/fonts
+PACKSDIR=$DOTSDIR/packs
 CONFIG=".config"
 
 md_help() {
@@ -22,13 +22,13 @@ md_help() {
   echo "  new [NAME]              Create a new folder in"
   echo "                          modules path"
   echo "  edit [NAME]             Edit a config file"
-
 }
+
 md_link() {
   mod=`echo $1 | tr '[:upper:]' '[:lower:]'`
   if [[ "$mod" == "all" ]]; then
     echo "linking modules folder to '~/$CONFIG'"
-    stow -d $HOME/$DOTSDIR -t $HOME/$CONFIG --no-folding modules --dotfiles
+    stow -d $DOTSDIR -t $HOME/$CONFIG --no-folding modules --dotfiles
   else
     echo TODO: linking module $mod...
     exit 1
@@ -56,9 +56,7 @@ pk_install() {
     echo "installing $pack.pck"
     sudo pacman -Sy --noconfirm $(cat $PACKSDIR/$pack.pck)
   fi
-
 }
-
 
 ft_help() {
   echo "A setter for codie;dots O's fonts"
@@ -79,6 +77,94 @@ ft_apply() {
   fc-cache -f
 }
 
+tg_help() {
+  # TODO: add --exit/-e to get commands for exitcodes
+  echo "A toggler for codie;dots O"
+  echo 
+  echo "COMMANDS"
+  echo
+  echo "  dnd [on|off|toggle|get] "
+  echo "      [--polybar %pid%]   Toggle dnd mode"
+  echo "  nl [on|off|toggle|get] "
+  echo "     [--polybar %pid%]    Toggle nightlight"
+  echo
+  exit
+}
+
+tg_nlight() {
+  [ ! -f "/tmp/redshift" ]
+  nlstat="$?"
+
+  # TODO: add vars for K values
+  # TODO: add a conviniance function/wraper for redshift
+
+  case "$1" in
+    "on"     ) redshift -P -O 4500K > /dev/null
+               touch /tmp/redshift ;;
+    "off"    ) redshift -P -O 6500K > /dev/null
+               rm /tmp/redshift ;;
+    "toggle" ) 
+               if [ -f "/tmp/redshift" ]; then
+                 echo disabled redshift
+                 redshift -P -O 6500K > /dev/null
+                 rm /tmp/redshift
+               else
+                 echo enabled redshift
+                 redshift -P -O 4500K > /dev/null
+                 touch /tmp/redshift
+               fi ;;
+    "get"    ) echo $nlstat ;;
+    *        ) 
+               if [ -f "/tmp/redshift" ]; then
+                 echo disabled redshift
+                 redshift -P -O 6500K > /dev/null
+                 rm /tmp/redshift
+               else
+                 echo enabled redshift
+                 redshift -P -O 4500K > /dev/null
+                 touch /tmp/redshift
+               fi ;;
+  esac 
+
+  if [[ "$2" == "--polybar" ]]; then
+    if [ -z "$3" ]; then
+      echo "No pid provided for --polybar"
+      exit 2
+    fi
+
+  if [ -f "/tmp/redshift" ]; then
+      polybar-msg -p $3 action nightlight hook 0 > /dev/null
+    else
+      polybar-msg -p $3 action nightlight hook 1 > /dev/null
+    fi
+
+  fi
+
+}
+
+tg_dnd() {
+  case "$1" in
+    "on"     ) dunstctl set-paused true ;;
+    "off"    ) dunstctl set-paused false ;;
+    "toggle" ) dunstctl set-paused toggle ;;
+    "get"    ) dunstctl is-paused ;;
+    *        ) dunstctl set-paused toggle ;;
+  esac 
+
+  if [[ "$2" == "--polybar" ]]; then
+    if [ -z "$3" ]; then
+      echo "No pid provided for --polybar"
+      exit 2
+    fi
+
+    if [ "$(dunstctl is-paused)" = "true" ]; then
+      polybar-msg -p $3 action dnd hook 0 > /dev/null
+    else
+      polybar-msg -p $3 action dnd hook 1 > /dev/null
+    fi
+  fi
+}
+
 sw_help() {
   echo "Central util for codie;dots O"
   echo
@@ -90,6 +176,8 @@ sw_help() {
   echo "                          font util"
   echo "  pack                    Shortcut to codie;dots O"
   echo "                          pack installer"
+  echo "  toggle                  Shortcut to codie;dots O"
+  echo "                          toggler"
   exit
 }
 
@@ -116,10 +204,20 @@ sw_font() {
 
 sw_pack() {
   case "$1" in
-    "ls"      ) ls $PACKSDIR $2 ;;
+    "ls"      ) ls $PACKSDIR ${@:2} ;;
     "install" ) pk_install $2 ;;
 
     *         ) pk_help ;;
+  esac
+}
+
+sw_togl() {
+  case "$1" in
+    "dnd"        ) tg_dnd ${@:2} ;;
+    "nl"         ) tg_nlight ${@:2} ;;
+    "nightlight" ) tg_nlight ${@:2} ;;
+
+    *            ) tg_help ;;
   esac
 }
 
@@ -134,6 +232,11 @@ case "$1" in
 
   "p"      ) sw_pack ${@:2} ;;
   "pack"   ) sw_pack ${@:2} ;;
+
+  "t"      ) sw_togl ${@:2} ;;
+  "tog"    ) sw_togl ${@:2} ;;
+  "togl"   ) sw_togl ${@:2} ;;
+  "toggle" ) sw_togl ${@:2} ;;
 
   *        ) sw_help ;;
 esac
