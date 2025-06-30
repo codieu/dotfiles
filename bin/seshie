@@ -1,12 +1,14 @@
 #!/usr/bin/env bash
 
-PROJ_FOLDERS=`echo ~/personal ~/work ~/dots/modules ~/cloned personal/learning ~/vault`
-EXTR_FOLDERS=`echo ~/dots ~/dots/bin`
+PROJ_FOLDERS=`echo ~/dots/modules ~/dots/bin ~/programming ~/programming/thirdparty`
+EXTR_FOLDERS=`echo ~/dots ~/txt `
 
 if [[ -n $1 ]] then
   selected=$1
 else
-  selected=`find $PROJ_FOLDERS -maxdepth 1 -mindepth 1 -type d | cat - <(echo $EXTR_FOLDERS $PROJ_FOLDERS) | sed 's/ /\n/g' | sed 's/\/home\/codies\///g' | sort -r | fzf --tmux top,70%,65% --preview "cd $HOME/{}; git status; echo; ls -lhA"`
+  # TODO: ERROR: this is user name spesific
+
+  selected=`find $PROJ_FOLDERS -maxdepth 1 -mindepth 1 -type d | cat - <(echo $EXTR_FOLDERS $PROJ_FOLDERS) | sed 's/ /\n/g' | sed 's/\/home\/petal\///g' | sort -r| uniq | fzf --tmux top,70%,65% --preview "cd $HOME/{}; git status; echo; ls -lhA"`
 fi
 
 if [[ -z $selected ]] then
@@ -15,9 +17,7 @@ fi
 
 path="$HOME/$selected"
 
-tmux_running=$(pgrep tmux)
-
-if [[ -z $TMUX ]] && [[ -z $tmux_running ]]; then
+if [[ -z $TMUX ]] && [[ -z $(pgrep tmux) ]]; then
     tmux new-session -s $selected -c $path
     exit
 fi

@@ -2,8 +2,8 @@
 
 # TODO: make a cache thing
 
-langs="js lua python java"
-utils="bash jq awk sed sort find"
+langs="js lua python java rust bash"
+utils=" jq awk sed sort find"
 
 selec=`printf "$langs $utils" | tr ' ' '\n' | sort -r | fzf --preview "curl cht.sh/{} -s"`
 

@@ -34,7 +34,7 @@ echo "Text: $text"
 printf "Send message? [Y/n] "
 read confirm
 
-if [ "$confirm" == "n" ] || [ "$confirm" == "N" ]; then
+if yesno ${confirm}Y -i ; then
   echo exiting
   exit 1
 fi

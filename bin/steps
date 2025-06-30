@@ -84,8 +84,8 @@ EDITOR="vim"
 ### TODO: add .local/bin to path 
 
 # mkdir .steam/root/compatibilitytools.d/
-protonup -d ".steam/root/compatibilitytools.d/"
-protonup
+# protonup -d ".steam/root/compatibilitytools.d/"
+# protonup
 
 
 

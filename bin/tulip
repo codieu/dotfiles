@@ -9,7 +9,46 @@ FONTSDIR=$DOTSDIR/fonts
 PACKSDIR=$DOTSDIR/packs
 CONFIG=".config"
 
+BACKUPMOUNT="/backup"
+BACKUPDIR="$BACKUPMOUNT"
+
+sw_banner() {
+  echo "       __/)                          "
+  echo "    .-(__(=:                         "
+  echo " |\ |    \)     /   _/_ /)   //      "
+  echo " \ ||        __/ __ /  // o // _  _  "
+  echo "  \||       (_/_(_)<__//_<_</_</_/_)_"
+  echo "   \|                />              "
+  echo "    |  codie;dots O </  with ✧˚ ♡ · ."
+}
+
+sw_text(){
+  # TODO: add --no-extra to disable "codie;dots O" text
+  if ! which figlet > /dev/null; then
+    echo figet not found
+    echo install with: \`pacman -S figlet\`
+    exit 2
+  fi
+  # TODO: make other stuff maybe
+  printf "codie;dots O"
+  figlet -f mini $@ | tr '|' '/' | tr ')' '/' | tr '(' '\' 2> /dev/null
+}
+
+sw_linkbin() {
+  echo "Linking bin..."
+  sudo stow -d $HOME/dots -t /usr/local/bin --no-folding bin
+}
+
+sw_xmm() {
+  echo "xmodmap $XDG_CONFIG_HOME/X11/xmodmap..."
+  xmodmap $XDG_CONFIG_HOME/X11/xmodmap
+}
+
+
 md_help() {
+  echo
+  sw_banner
+  echo
   echo "A linker for codie;dots O's configs"
   echo 
   echo "COMMANDS"
@@ -18,13 +57,13 @@ md_help() {
   echo "  ls                      List modules"
   echo "  tree                    Show modules in tree format"
   echo "  link [all|NAME]         Symlink modules to \$CONFIG"
-  echo "  linkbin                 Symlink bin to /usr/local/bin"
   echo "  new [NAME]              Create a new folder in"
   echo "                          modules path"
   echo "  edit [NAME]             Edit a config file"
 }
 
 md_link() {
+  mkdir $HOME/$CONFIG
   mod=`echo $1 | tr '[:upper:]' '[:lower:]'`
   if [[ "$mod" == "all" ]]; then
     echo "linking modules folder to '~/$CONFIG'"
@@ -36,7 +75,23 @@ md_link() {
   fi
 }
 
+md_edit() {
+
+  MODEDIT=`tulip m ls`
+
+  if [[ -z "$1" ]]; then
+    echo $MODEDIT | tr ' ' '\n' | fzf
+  else
+    # list contains
+    echo $1
+  fi
+
+}
+
 pk_help() {
+  echo
+  sw_banner
+  echo
   echo "A downloader for codie;dots O's packs"
   echo 
   echo "COMMANDS"
@@ -59,6 +114,9 @@ pk_install() {
 }
 
 ft_help() {
+  echo
+  sw_banner
+  echo
   echo "A setter for codie;dots O's fonts"
   echo 
   echo "COMMANDS"
@@ -77,18 +135,68 @@ ft_apply() {
   fc-cache -f
 }
 
+ft_deapply() {
+  echo "deleting /usr/share/fonts/$1"
+  sudo rm /usr/share/fonts/$1 -r
+  # TODO: check if -f switch needed
+  fc-cache -f
+}
+
 tg_help() {
+  echo
+  sw_banner
+  echo
   # TODO: add --exit/-e to get commands for exitcodes
   echo "A toggler for codie;dots O"
   echo 
   echo "COMMANDS"
   echo
-  echo "  dnd [on|off|toggle|get] "
-  echo "      [--polybar %pid%]   Toggle dnd mode"
-  echo "  nl [on|off|toggle|get] "
-  echo "     [--polybar %pid%]    Toggle nightlight"
+  echo "  vpn [on|off|toggle|get --exit|-e] "
+  echo "      [--polybar %pid%]   toggle vpn connection"
+  echo "  nl [on|off|toggle|get --exit|-e] "
+  echo "     [--polybar %pid%]    toggle nightlight"
+  echo "  dnd [on|off|toggle|get --exit|-e] "
+  echo "      [--polybar %pid%]   toggle dnd mode"
+  echo "  gm [list|get --exit|-e] "
+  echo "     [--polybar %pid%]    get gm status"
+  echo
+  echo " TODO: implement --exit|-e for exitcodes"
+  echo " NOTE: return of 'get' is inconsistent"
   echo
   exit
+}
+
+tg_vpn() {
+  # TODO: automate this maybe
+  # TODO: integration with vpnadd??
+  VPNNAME="nl-free-2.protonvpn.udp"
+
+  case "$1" in
+    "on"     ) nmcli c up $VPNNAME ;;
+    "off"    ) nmcli c down $VPNNAME ;;
+    "get"    ) nmcli -f GENERAL.STATE c show $VPNNAME | awk '{print $2}' ;;
+    *        ) 
+      if [ `nmcli -f GENERAL.STATE c show $VPNNAME | awk '{print $2}'` == "activated" ]; then
+        nmcli c down $VPNNAME
+      else
+        nmcli c up $VPNNAME
+      fi ;;
+  esac 
+
+  if [[ "$2" == "--polybar" ]]; then
+    if [ -z "$3" ]; then
+      echo "No pid provided for --polybar"
+      exit 2
+    fi
+
+    if [[ `nmcli -f GENERAL.STATE c show $VPNNAME | awk '{print $2}'` == "activated" ]]; then
+      polybar-msg -p $3 action vpn hook 0 > /dev/null
+    else
+      polybar-msg -p $3 action vpn hook 1 > /dev/null
+    fi
+
+  fi
+
 }
 
 tg_nlight() {
@@ -103,16 +211,6 @@ tg_nlight() {
                touch /tmp/redshift ;;
     "off"    ) redshift -P -O 6500K > /dev/null
                rm /tmp/redshift ;;
-    "toggle" ) 
-               if [ -f "/tmp/redshift" ]; then
-                 echo disabled redshift
-                 redshift -P -O 6500K > /dev/null
-                 rm /tmp/redshift
-               else
-                 echo enabled redshift
-                 redshift -P -O 4500K > /dev/null
-                 touch /tmp/redshift
-               fi ;;
     "get"    ) echo $nlstat ;;
     *        ) 
                if [ -f "/tmp/redshift" ]; then
@@ -146,7 +244,6 @@ tg_dnd() {
   case "$1" in
     "on"     ) dunstctl set-paused true ;;
     "off"    ) dunstctl set-paused false ;;
-    "toggle" ) dunstctl set-paused toggle ;;
     "get"    ) dunstctl is-paused ;;
     *        ) dunstctl set-paused toggle ;;
   esac 
@@ -165,8 +262,99 @@ tg_dnd() {
   fi
 }
 
+tg_gm() {
+  case "$1" in
+    "list"   ) gamemodelist ;;
+    *        ) gamemodelist | grep PID; echo $? ;;
+  esac 
+
+  if [[ "$2" == "--polybar" ]]; then
+    if [ -z "$3" ]; then
+      echo "No pid provided for --polybar"
+      exit 2
+    fi
+
+    if gamemodelist | grep PID; then
+      polybar-msg -p $3 action gamemode hook 0 > /dev/null
+    else
+      polybar-msg -p $3 action gamemode hook 1 > /dev/null
+    fi
+  fi
+}
+
+bk_help() {
+  echo
+  sw_banner
+  echo
+  # TODO: add --exit/-e to get commands for exitcodes
+  echo "Backup manager for codie;dots O"
+  echo 
+  echo "COMMANDS"
+  echo
+  echo "  take [OPTIONS]          Take a quick backup"
+  echo "  list                    List the backups"
+  echo "  load [DATE]             Load the backup [DATE]"
+  echo "                          to \$TULIP_BACKUP_HOME or"
+  echo "                         \$HOME if not set"
+  echo "  loadtmp [DATE]          Load backup [DATE] to /tmp"
+  echo
+  echo " Note: all backup actions use $BACKUPMOUNT"
+  echo " for storing backups  "
+  exit
+}
+
+bk_take() {
+  sudo mkdir $BACKUPDIR/$(date +"%Y-%m-%d")
+
+  echo :: archiving project folders...
+
+  tar -cf project$(date +"%Y-%m-%d").tar ~/personal ~/playground ~/work
+  sudo mv project$(date +"%Y-%m-%d").tar $BACKUPDIR/$(date +"%Y-%m-%d")
+
+  echo :: archiving dots...
+
+  tar -cf dots$(date +"%Y-%m-%d").tar $DOTSDIR
+  sudo mv dots$(date +"%Y-%m-%d").tar $BACKUPDIR/$(date +"%Y-%m-%d")
+
+  echo :: archiving misc...
+
+  tar -cf misc$(date +"%Y-%m-%d").tar ~/misc
+  sudo mv misc$(date +"%Y-%m-%d").tar $BACKUPDIR/$(date +"%Y-%m-%d")
+
+}
+
+bk_load() {
+  if [[ -z $TULIP_BACKUP_HOME ]] then
+    TULIP_BACKUP_HOME=$HOME
+  fi
+
+  DATE=$1
+
+  printf "loading backup $DATE to $TULIP_BACKUP_HOME [Y/n] "
+  read input
+
+  if yesno ${input}Y -i; then
+    echo esit
+    exit
+  fi
+
+  find $BACKUPDIR/$DATE -name '*.tar' -exec tar xf {} --directory=$TULIP_BACKUP_HOME \;
+}
+
 sw_help() {
+  echo
+  sw_banner
+  echo
   echo "Central util for codie;dots O"
+  echo
+  echo "COMMANDS"
+  echo
+  echo "  help                    Print help and exit"
+  echo "  linkbin                 Symlink dots/bin to /usr/local/bin"
+  echo "  banner                  Print banner"
+  echo "  text [STRING]           Converts STRING into"
+  echo "                          header for config files"
+  echo "  xxm                     sources .xmodmap file"
   echo
   echo "SHORTCUTS"
   echo
@@ -178,6 +366,10 @@ sw_help() {
   echo "                          pack installer"
   echo "  toggle                  Shortcut to codie;dots O"
   echo "                          toggler"
+  echo "  backup                  Shortcut to codie;dots O"
+  echo "                          backup utility"
+  # echo "  mp3                     Shortcut to codie;dots O"
+  # echo "                          mp3 liberary util"
   exit
 }
 
@@ -186,8 +378,9 @@ sw_modu() {
     "ls"      ) ls $MODULEDIR ${@:2} ;;
     "tree"    ) tree $MODULEDIR ${@:2} ;;
     "link"    ) md_link $2 ;;
-    "linkbin" ) sudo stow -d $HOME/dots -t /usr/local/bin --no-folding bin ;;
+    # TODO: fix this now working for other users / idk if i need to tho
     "new"     ) mkdir $MODULEDIR/$2 ;;
+    "edit"    ) md_edit ${@:2} ;;
 
     *         ) md_help ;;
   esac
@@ -195,10 +388,12 @@ sw_modu() {
 
 sw_font() {
   case "$1" in
-    "ls"    ) ls $FONTSDIR $2;;
-    "apply" ) ft_apply $2 ;;
+    "ls"      ) ls $FONTSDIR ${@:2};;
+    "apply"   ) ft_apply $2 ;;
+    "del"     ) ft_deapply $2 ;;
+    "deapply" ) ft_deapply $2 ;;
 
-    *       ) ft_help ;;
+    *         ) ft_help ;;
   esac
 }
 
@@ -213,15 +408,35 @@ sw_pack() {
 
 sw_togl() {
   case "$1" in
-    "dnd"        ) tg_dnd ${@:2} ;;
+    "vpn"        ) tg_vpn ${@:2} ;;
     "nl"         ) tg_nlight ${@:2} ;;
     "nightlight" ) tg_nlight ${@:2} ;;
+    "dnd"        ) tg_dnd ${@:2} ;;
+    "gamemode"   ) tg_gm ${@:2} ;;
+    "gm"         ) tg_gm ${@:2} ;;
 
     *            ) tg_help ;;
   esac
 }
 
+sw_back() {
+  case "$1" in
+    "take"       ) bk_take ${@:2} ;;
+    "list"       ) ls $BACKUPDIR ;;
+    "load"       ) bk_load ${@:2} ;;
+    "loadtmp"    ) TULIP_BACKUP_HOME=/tmp bk_load ${@:2} ;;
+
+    *            ) bk_help ;;
+  esac
+}
+
 case "$1" in
+  "banner" ) sw_banner      ;;
+  "text"   ) sw_text ${@:2} ;;
+  "linkbin") sw_linkbin     ;;
+  "lb"     ) sw_linkbin     ;;
+  "xmm"    ) sw_xmm         ;;
+
   "m"      ) sw_modu ${@:2} ;;
   "mod"    ) sw_modu ${@:2} ;;
   "modu"   ) sw_modu ${@:2} ;;
@@ -238,6 +453,9 @@ case "$1" in
   "togl"   ) sw_togl ${@:2} ;;
   "toggle" ) sw_togl ${@:2} ;;
 
-  *        ) sw_help ;;
-esac
+  "b"      ) sw_back ${@:2} ;;
+  "back"   ) sw_back ${@:2} ;;
+  "backup" ) sw_back ${@:2} ;;
 
+  *        ) sw_help        ;;
+esac

@@ -1,0 +1,89 @@
+#!/bin/bash
+
+# THIS RUNS FROM FOLLOWING UDEV SCRIPT
+#
+# "/etc/udev/rules.d/99-automount.rules"
+# ```
+#  KERNEL=="sd[a-z][0-9]", SUBSYSTEMS=="usb", ACTION=="add", RUN+="/usr/local/bin/automount add"
+#  KERNEL=="sd[a-z][0-9]", SUBSYSTEMS=="usb", ACTION=="remove", RUN+="/usr/local/bin/automount rem"
+# ```
+#
+# NOTE: that we dont actualy have $PATH envvar so we are on our own
+# but it also seams that /sbin and /usr/local/bin (?) are available
+# this might not be on every *nix machine nor maybe POSIX complient
+# but im gana use /sbin/ bins on arch linux as granted and i rly dc
+
+# TODO: URGENT make a kill switch
+# exit 1
+
+# Usgae: [add|rem]
+# Define args
+ACTION=$1
+DEVICE=$DEVNAME
+
+# what a complicated way of doing this
+# LABEL=`blkid -p $DEVICE | tr ' ' '\n' | grep LABEL= | tr '=' ' ' | awk '{print $2}' | tr -d '"'`
+# echo $LABEL >> /root/logs.txt
+
+# udev envvar
+LABEL=$ID_FS_LABEL
+
+case "$LABEL" in
+  "SILLYBACKUP" ) MOUNTPOINT="/backup" ;;
+  *             ) MOUNTPOINT="/media/$LABEL" ;;
+esac
+
+NUSER="petal"
+DBUS_ADDRESS=`grep -z DBUS_SESSION_BUS_ADDRESS /proc/$(pidof bspwm)/environ|cut -d= -f2-`
+
+send_notif() {
+  MSG="AUTOMOUNT \"${@:2}\""
+  su $NUSER -c "DISPLAY=:0 DBUS_SESSION_BUS_ADDRESS=$DBUS_ADDRESS \
+     XDG_RUNTIME_DIR=\"/run/user/$(id -u)\" notify-send -u $1 $MSG"
+}
+
+add_mount() {
+
+  # TODO: this is a bad implementaion. fixme
+  if [[ -d "$MOUNTPOINT" ]]; then
+    # MOUNTPOINT+="-$DEVSHORT"
+    send_notif critical "MOUNTPOINT $MOUNTPOINT exists cant mount."
+    exit 2
+  fi
+
+  mkdir -p $MOUNTPOINT
+  
+  # su -c -- "mount $DEVICE $MOUNTPOINT" >> /root/logs.txt 2>> /root/logs.txt
+  systemd-mount --no-block -A -G --owner=$NUSER $DEVICE $MOUNTPOINT
+  err=$?
+
+  if [[ "$err" != "0" ]]; then
+    # TODO: instead of just showing the err code maybe output usefull stuff
+    # because mount(8) has good exit code standard
+    send_notif critical "Mount error ($err) on $DEVICE"
+    rmdir $MOUNTPOINT
+  else
+    if [[ "$MOUNTPOINT" == "/backup" ]]; then
+      # TODO: actauly do smth with the thing
+      # send_notif low "Backup device prepearing"
+      send_notif normal "Backup device ready!"
+    fi
+
+    send_notif low "Mounted $DEVICE on $MOUNTPOINT"
+  fi
+
+}
+
+rem_mount() {
+  # Somehow this works better then umounting $DEVICE
+  # systemd-mount -G -u $MOUNTPOINT
+
+  rmdir $MOUNTPOINT >> /root/logs.txt 2>> /root/logs.txt
+
+  send_notif low "Unmounted $DEVICE from $MOUNTPOINT"
+}
+
+case "$ACTION" in
+  "add") add_mount ;;
+  "rem") rem_mount ;;
+esac

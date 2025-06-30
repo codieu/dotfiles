@@ -1,0 +1,44 @@
+#!/bin/bash
+
+if [[ -z "$1" ]] then
+  echo "A util for adding .ovpn files to nmtui"
+  echo 
+  echo "Usgae: addvpn <file> [username] [passwd]"
+  exit 3
+fi
+
+if [[ `pwd` != "/etc/openvpn/client" ]]; then
+  echo "please navigate to /etc/openvpn/client for this script to work properly"
+  exit 1
+fi
+
+# TODO: prompt for passwd and username if not provided
+if [[ -z "$2" ]] then
+  printf "Username and passwd not provided. Contuine? [Y/n]: "
+  read query
+  if yesno ${query}N; then
+    echo yes
+  else 
+    echo no
+  fi
+else
+  CON_USERNAME=$2
+fi
+  CON_PASSWD=$3
+
+CON_FILE=$1
+
+
+nmcli con import type openvpn file $CON_FILE.ovpn
+
+# Adding VPN username
+nmcli con mod $CON_FILE vpn.user-name $CON_USERNAME
+
+# Changing [VPN]->password-flags value to 0
+nmcli con mod $CON_FILE +vpn.data "password-flags=0"
+
+# Adding VPN password
+nmcli con mod $CON_FILE vpn.secrets "password=$CON_PASSWD"
+
+# Establishing VPN connection
+nmcli con up id $CON_FILE

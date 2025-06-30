@@ -1,0 +1,22 @@
+#!/bin/bash
+
+# Setups arduino stuff for arch/artix linux
+# https://wiki.archlinux.org/title/Arduino
+
+# TODO: flesh this out idk
+
+
+if [[ `whoami` != "root" ]]; then
+  echo Please run with sudo
+  exit 2
+fi
+
+pacman -S arduino-cli arduino-ide
+
+touch /etc/udev/rules.d/01-ttyusb.rules
+echo 'SUBSYSTEMS=="usb-serial", TAG+="uaccess"' >> /etc/udev/rules.d/01-ttyusb.rules
+$EDITOR /etc/udev/rules.d/01-ttyusb.rules
+
+su $USER -c 'yay -S  arduino-avr-core arduino-pinoccio'
+
+# TODO: activate cdc_acm kmodule

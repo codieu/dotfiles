@@ -1,0 +1,35 @@
+#!/bin/bash
+
+# A script to help with yes/no prompts
+
+if [[ -z "$1" ]] then
+  echo "Usgae: yesno <prompt>[default] [--invert]"
+  echo
+  echo "  printf \"Examplt Prompt [Y/n]: \""
+  echo "  read input"
+  echo
+  echo "  if yesno \${input}Y; then"
+  echo "    echo you said yes"
+  echo "  else"
+  echo "    echo you said no"
+  echo "  fi"
+  exit 2
+fi
+
+yescode="0"
+nocode="1"
+
+
+if [[ "$2" == "--invert" ]] || [[ "$2" == "-i" ]]; then
+  yescode="1"
+  nocode="0"
+fi
+
+case "$1" in
+  y* ) exit $yescode ;;
+  Y* ) exit $yescode ;;
+   * ) exit $nocode  ;;
+esac
+
+# How did we get here?
+exit 3

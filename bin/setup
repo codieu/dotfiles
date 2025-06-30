@@ -1,45 +1,126 @@
 #!/bin/bash
 
-# figlet -f mini polybar | tr '(' '\' | tr ')' '/' | tr '|' '/'
+# make sure pwd is the git repo
+if [ `dirname $0` != "./bin" ]; then
+  echo make sure the pwd is the git repo
+  echo and you run with relative path \(eg: ./bin/setup\)
+  exit
+fi
 
 init() {
-  # make sure pwd is the git repo
-   printf "checking pwd...     "
-  if [ `dirname $0` == "./bin" ]; then
-    echo OK
-  else
-    echo ERR
-    echo
-    echo make sure the pwd is the git repo
-    exit
-  fi
 
   export DOTDIR=`pwd`
 
   # install necessary packages
-  #! install_pack first.pck
+  install_pack first.pck
 
   # select and editor
   echo "select an editor to use"
   echo
   export EDITOR=`cat packs/editors.pck | fzf --height=6`
 
+  # Install it for good measure
+  sudo pacman -S $EDITOR --noconfirm --needed
+
   # set zsh as default shell
   echo "Changing shell to zsh"
   chsh $USER -s /bin/zsh
 
+  echo "Tulip util setup"
+  ./bin/tulip m linkbin
+  ./bin/tulip m link ALL
+  # TODO: this is config dir spesific
+  ln -sf ~/.config/zsh/.zprofile ~/.zprofile
+
   # setup graph env
   printf "Should setup graph env [Y/n]? "
   read graph
-  if [[ $graph == "y" ]]; then
-  install_pack graph.pck
+
+  if yesno ${graph}y; then
+    install_pack graph.pck
+    # TODO: symlink .zprofile with xinitrc
+    # TODO: check if yay exists / setup yay
+    
+    # seting up zscroll for polybar
+    sudo pacman -S python-distutils-extra
+    yay -S zscroll
   else
     echo
   fi
 
+  # TODO: laod fonts
+  # TODO: load mosue theme
+  # TODO: link the mouse theme to /usr/share/icons/default
 
 
 
+
+}
+
+ardsetup() {
+  # Setups arduino stuff for arch/artix linux
+  # https://wiki.archlinux.org/title/Arduino
+
+  # TODO: flesh this out idk
+  sudo pacman -S arduino-cli arduino-ide
+
+  sudo touch /etc/udev/rules.d/01-ttyusb.rules
+  sudo echo 'SUBSYSTEMS=="usb-serial", TAG+="uaccess"' >> /etc/udev/rules.d/01-ttyusb.rules
+  sudo $EDITOR /etc/udev/rules.d/01-ttyusb.rules
+
+  yay -S arduino-avr-core arduino-pinoccio
+
+  # TODO: activate cdc_acm kmodule
+}
+
+steamsetup() {
+  echo "Steam setup requires [multilib] repo"
+  printf "Contiune if you have it [y/N]:"
+
+  read confirm
+
+  if yesno ${confirm}N -i; then
+    exit
+  fi
+
+  install_pack steam.pck
+
+  echo Checking ESYNC
+  # TODO: check if this is artix spesific
+  if [[ "ulimit -Hn" < "500,000" ]]; then
+    echo not enabled, enabling
+
+    echo updating /ect/limits
+    echo "$CUSER N524388" >> /etc/limits
+    sleep 1
+    $EDITOR /etc/limits
+
+    echo updating /etc/security/limits.conf
+    echo "$CUSER	soft	nofile	524288" >> /etc/security/limits.conf
+    echo "$CUSER	hard	nofile	524288" >> /etc/security/limits.conf
+    echo "@$CUSER	soft	nofile	524288" >> /etc/security/limits.conf
+    echo "@$CUSER	hard	nofile	524288" >> /etc/security/limits.conf
+    sleep 1
+    $EDITOR /etc/security/limits.conf
+
+  else
+    echo ESYNC IS ENABLED!
+  fi
+  echo Installing and bootstraping game mode!
+
+  mkdir $HOME/cloned
+  cd $HOME/cloned
+  git clone https://github.com/FeralInteractive/gamemode.git
+  cd gamemode
+  git checkout 1.5.1 # omit to build the master branch
+  ./bootstrap.sh
+
+}
+
+ghsetup() {
+  # TODO: gen a ssh key and setup github config stuff
+  # TODO: and prompt to add stuff to github profile
+  echo
 }
 
 install_pack() {
@@ -50,5 +131,16 @@ install_pack() {
 
 
 case "$1" in
-  "init") init ;;
+  "init"  ) init ;;
+  "ard"   ) ardsetup ;;
+  "steam" ) steamsetup ;;
+  "github") ghsetup ;;
+  *       )
+    echo
+    echo "OPTIONS"
+    echo
+    echo " init"
+    echo " ard"
+    echo " steam"
+    echo " github"
 esac
